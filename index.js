@@ -16,6 +16,8 @@ const io = socketIo(server, {
   },
 });
 
+const port = process.env.PORT || 4000;
+
 let currentQuestionIndex = 0;
 const questions = [
   {
@@ -292,7 +294,7 @@ app.get("/summary", (req, res) => {
   const summary = generateSummary(answers);
   res.json(summary);
 });
-exports.api = functions.https.onRequest(app);
-// server.listen(4000, () => {
-//   console.log("Server is listening on port 4000");
-// });
+
+server.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
