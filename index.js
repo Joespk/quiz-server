@@ -41,23 +41,14 @@ const questions = [
 const totalTime = 30; // Total time for each question in seconds
 const bonusPoints = 50; // Updated to reflect only the bonus points
 
-app.use(cors(corsOptions));
-
-// Middleware to check for authorization token
-app.use((req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.split(" ")[1];
-    // Verify the token here (this is just an example)
-    if (token === "YOUR_SECRET_TOKEN") {
-      next();
-    } else {
-      res.sendStatus(401);
-    }
-  } else {
-    res.sendStatus(401);
-  }
-});
+app.use(
+  cors({
+    origin: "https://quiz-test-hosting.web.app",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  })
+);
 
 const dataDirPath = path.join(__dirname, "data");
 const dataFilePath = path.join(dataDirPath, "data.json");
