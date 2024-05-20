@@ -1,68 +1,23 @@
 [
   {
-    "name": "joespk",
-    "question": "What is the capital of France?",
-    "answer": "4",
-    "timestamp": "2024-05-19T06:56:06.369Z"
-  },
-  {
-    "name": "joespk",
-    "question": "What is 2 + 2?",
-    "answer": "4",
-    "timestamp": "2024-05-19T06:56:15.913Z"
-  },
-  {
-    "name": "joespk",
-    "question": "What is the capital of Thailand?",
-    "answer": "5",
-    "timestamp": "2024-05-19T06:56:25.201Z"
-  },
-  {
-    "name": "joetest1",
-    "question": "What is the capital of Thailand?",
-    "answer": "1",
-    "timestamp": "2024-05-19T06:56:43.312Z"
-  },
-  {
-    "name": "joetest1",
-    "question": "What is the capital of France?",
-    "answer": "2",
-    "timestamp": "2024-05-19T06:56:50.168Z"
-  },
-  {
-    "name": "joetest1",
-    "question": "What is 2 + 2?",
-    "answer": "4",
-    "timestamp": "2024-05-19T06:56:55.992Z"
-  },
-  {
-    "name": "joestet2",
+    "name": "aaa",
     "question": "What is the capital of France?",
     "answer": "Paris",
-    "timestamp": "2024-05-19T07:14:22.279Z"
+    "timestamp": "2024-05-20T07:35:36.952Z",
+    "timeAnswered": 2.366
   },
   {
-    "name": "joestet2",
+    "name": "aaa",
     "question": "What is 2 + 2?",
     "answer": "4",
-    "timestamp": "2024-05-19T07:14:32.639Z"
+    "timestamp": "2024-05-20T07:35:40.187Z",
+    "timeAnswered": 1.759
   },
   {
-    "name": "joestet2",
+    "name": "aaa",
     "question": "What is the capital of Thailand?",
     "answer": "Bangkok",
-    "timestamp": "2024-05-19T07:14:36.127Z"
-  },
-  {
-    "name": "joespk",
-    "question": "What is the capital of France?",
-    "answer": "Paris",
-    "timestamp": "2024-05-19T08:06:29.228Z"
-  },
-  {
-    "name": "joko",
-    "question": "What is 2 + 2?",
-    "answer": "6",
-    "timestamp": "2024-05-19T08:23:54.011Z"
+    "timestamp": "2024-05-20T07:35:43.921Z",
+    "timeAnswered": 2.338
   }
 ]

@@ -1,19 +1,19 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true
-  }
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  },
 });
 
 let currentQuestionIndex = 0;
@@ -21,142 +21,275 @@ const questions = [
   {
     question: "What is the capital of France?",
     choices: ["Paris", "London", "Berlin", "Madrid"],
-    correctAnswer: "Paris"
+    correctAnswer: "Paris",
   },
   {
     question: "What is 2 + 2?",
     choices: ["3", "4", "5", "6"],
-    correctAnswer: "4"
+    correctAnswer: "4",
   },
   {
     question: "What is the capital of Thailand?",
     choices: ["Bangkok", "Hanoi", "Tokyo", "Jakarta"],
-    correctAnswer: "Bangkok"
-  }
+    correctAnswer: "Bangkok",
+  },
 ];
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
-  credentials: true
-}));
+const totalTime = 30; // Total time for each question in seconds
+const bonusPoints = 50; // Updated to reflect only the bonus points
 
-const dataFilePath = path.join(__dirname, 'data/data.json');
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  })
+);
+
+const dataDirPath = path.join(__dirname, "data");
+const dataFilePath = path.join(dataDirPath, "data.json");
+const scoreFilePath = path.join(dataDirPath, "score.json");
+
+console.log("Data directory path:", dataDirPath); // Logging dataDirPath
+console.log("Score file path:", scoreFilePath); // Logging scoreFilePath
 
 let connectedPlayers = {};
+let quizStarted = false;
+let playerScores = {}; // Track player scores
 
-// Function to read the existing answers from the JSON file
+const ensureDataDirExists = () => {
+  console.log("Ensuring data directory exists");
+  if (!fs.existsSync(dataDirPath)) {
+    fs.mkdirSync(dataDirPath);
+    console.log("Data directory created");
+  }
+};
+
 const readAnswersFromFile = () => {
   try {
-    const data = fs.readFileSync(dataFilePath, 'utf8');
+    ensureDataDirExists();
+    console.log("Reading answers from file");
+    const data = fs.readFileSync(dataFilePath, "utf8");
     return JSON.parse(data);
   } catch (err) {
-    console.error('Error reading file:', err);
+    console.error("Error reading file:", err);
     return [];
   }
 };
 
-// Function to write answers to the JSON file
-const writeAnswersToFile = (answers) => {
+const readScoresFromFile = () => {
   try {
-    fs.writeFileSync(dataFilePath, JSON.stringify(answers, null, 2), 'utf8');
-    console.log('Data successfully written to file');
+    ensureDataDirExists();
+    console.log("Reading scores from file");
+    const data = fs.readFileSync(scoreFilePath, "utf8");
+    console.log("Scores read from file:", data); // Log the data read from the file
+    return JSON.parse(data);
   } catch (err) {
-    console.error('Error writing file:', err);
+    console.error("Error reading score file:", err);
+    return {};
   }
 };
 
-// Function to generate summary data
+const writeScoresToFile = (scores) => {
+  try {
+    ensureDataDirExists();
+    console.log("Writing scores to file");
+    fs.writeFileSync(scoreFilePath, JSON.stringify(scores, null, 2), "utf8");
+    console.log("Scores successfully written to file");
+    console.log("Scores written to file:", JSON.stringify(scores, null, 2)); // Log the data written to the file
+  } catch (err) {
+    console.error("Error writing score file:", err);
+  }
+};
+
+const writeAnswersToFile = (answers) => {
+  try {
+    ensureDataDirExists();
+    console.log("Writing answers to file");
+    fs.writeFileSync(dataFilePath, JSON.stringify(answers, null, 2), "utf8");
+    console.log("Data successfully written to file");
+  } catch (err) {
+    console.error("Error writing file:", err);
+  }
+};
+
 const generateSummary = (answers) => {
+  console.log("Generating summary");
   const summary = questions.map((question) => {
     const correctAnswers = answers
-      .filter(answer => answer.question === question.question && answer.answer === question.correctAnswer)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      .filter(
+        (answer) =>
+          answer.question === question.question &&
+          answer.answer === question.correctAnswer
+      )
+      .sort((a, b) => a.timeAnswered - b.timeAnswered);
+
+    const fastestAnswer = correctAnswers.length > 0 ? correctAnswers[0] : null;
 
     return {
       question: question.question,
-      correctUsers: correctAnswers.map(answer => ({
+      correctUsers: correctAnswers.map((answer) => ({
         name: answer.name,
-        timestamp: answer.timestamp
-      }))
+        timestamp: answer.timestamp,
+        timeAnswered: answer.timeAnswered,
+      })),
+      fastestAnswer: fastestAnswer
+        ? {
+            name: fastestAnswer.name,
+            timestamp: fastestAnswer.timestamp,
+            timeAnswered: fastestAnswer.timeAnswered,
+          }
+        : null,
     };
+  });
+
+  // Add scores to the summary
+  summary.push({
+    question: "Scores",
+    correctUsers: Object.keys(playerScores).map((playerName) => ({
+      name: playerName,
+      score: playerScores[playerName],
+    })),
   });
 
   return summary;
 };
 
-io.on('connection', (socket) => {
-  console.log('New client connected', socket.id);
+const calculateScore = (timeAnswered, correct) => {
+  if (!correct) return 0;
 
-  socket.on('join', (name) => {
+  const timeRemaining = totalTime - timeAnswered;
+  const timeFraction = timeRemaining / totalTime;
+  const bonus = bonusPoints * timeFraction;
+  return Math.round(bonus);
+};
+
+const sendCurrentQuestion = () => {
+  if (currentQuestionIndex < questions.length) {
+    io.emit("question", {
+      question: questions[currentQuestionIndex].question,
+      index: currentQuestionIndex,
+      choices: questions[currentQuestionIndex].choices,
+    });
+  } else {
+    checkIfQuizEnded();
+  }
+};
+
+const checkIfQuizEnded = () => {
+  if (currentQuestionIndex >= questions.length) {
+    quizStarted = false;
+    io.emit("quizEnded");
+  }
+};
+
+// Load existing scores from file when server starts
+playerScores = readScoresFromFile();
+console.log("Initial player scores:", playerScores); // Log initial scores
+
+io.on("connection", (socket) => {
+  console.log("New client connected", socket.id);
+
+  socket.on("join", (name) => {
     connectedPlayers[socket.id] = name;
-    console.log('Player joined:', name);
-    io.emit('playerList', Object.values(connectedPlayers));
+    if (!playerScores[name]) {
+      playerScores[name] = 0; // Initialize player score if not present
+    }
+    console.log("Player joined:", name);
+    io.emit("playerList", Object.values(connectedPlayers));
   });
 
-  // Send the current question to the newly connected client
-  socket.emit('question', questions[currentQuestionIndex]);
-
-  socket.on('nextQuestion', () => {
-    currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-    io.emit('question', questions[currentQuestionIndex]);
+  socket.on("startQuiz", () => {
+    currentQuestionIndex = 0; // Reset to first question
+    quizStarted = true;
+    io.emit("quizStarted", questions.length); // Send total number of questions
+    sendCurrentQuestion();
   });
 
-  socket.on('prevQuestion', () => {
-    currentQuestionIndex = (currentQuestionIndex - 1 + questions.length) % questions.length;
-    io.emit('question', questions[currentQuestionIndex]);
+  socket.on("endQuiz", () => {
+    quizStarted = false;
+    io.emit("quizEnded");
   });
 
-  socket.on('submitAnswer', (data) => {
-    const { name, answer, timestamp } = data;
+  socket.on("nextQuestion", () => {
+    if (!quizStarted) return;
+    currentQuestionIndex++;
+    sendCurrentQuestion();
+  });
+
+  socket.on("prevQuestion", () => {
+    if (!quizStarted) return;
+    currentQuestionIndex = Math.max(0, currentQuestionIndex - 1);
+    sendCurrentQuestion();
+  });
+
+  socket.on("submitAnswer", (data) => {
+    if (!quizStarted) return;
+    const { name, answer, timestamp, timeAnswered } = data;
     const answerData = {
       name,
       question: questions[currentQuestionIndex].question,
       answer,
-      timestamp
+      timestamp,
+      timeAnswered, // Add timeAnswered to the data
     };
 
-    console.log('Received answer:', answerData);
+    console.log("Received answer:", answerData);
 
-    // Check if the answer is correct
     const isCorrect = answer === questions[currentQuestionIndex].correctAnswer;
 
-    // Read existing data from the JSON file
     let answers = readAnswersFromFile();
-    console.log('Existing answers:', answers);
+    console.log("Existing answers:", answers);
 
-    // Check if the user has already submitted an answer for this question
-    if (answers.some(ans => ans.name === name && ans.question === questions[currentQuestionIndex].question)) {
-      console.log('User has already submitted an answer for this question:', name);
-      socket.emit('answerResult', { isCorrect: false, message: 'You have already submitted an answer for this question.' });
+    if (
+      answers.some(
+        (ans) =>
+          ans.name === name &&
+          ans.question === questions[currentQuestionIndex].question
+      )
+    ) {
+      console.log(
+        "User has already submitted an answer for this question:",
+        name
+      );
+      socket.emit("answerResult", {
+        isCorrect: false,
+        message: "You have already submitted an answer for this question.",
+      });
       return;
     }
 
-    // Add the new answer to the array
     answers.push(answerData);
-
-    // Write the updated array back to the JSON file
     writeAnswersToFile(answers);
-    console.log('Updated answers:', answers);
+    console.log("Updated answers:", answers);
 
-    // Emit the result to the client
-    socket.emit('answerResult', { isCorrect });
+    // Calculate and update score
+    const score = calculateScore(timeAnswered, isCorrect);
+    playerScores[name] += score;
+
+    // Write updated scores to file
+    console.log("Player scores before writing to file:", playerScores);
+    writeScoresToFile(playerScores);
+    console.log("Player scores after writing to file:", playerScores);
+
+    socket.emit("answerResult", { isCorrect, score });
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected', socket.id);
+  socket.on("disconnect", () => {
+    console.log("Client disconnected", socket.id);
+    const playerName = connectedPlayers[socket.id];
     delete connectedPlayers[socket.id];
-    io.emit('playerList', Object.values(connectedPlayers));
+    io.emit("playerList", Object.values(connectedPlayers));
   });
 });
 
-app.get('/summary', (req, res) => {
+app.get("/summary", (req, res) => {
   const answers = readAnswersFromFile();
   const summary = generateSummary(answers);
   res.json(summary);
 });
 
 server.listen(4000, () => {
-  console.log('Server is listening on port 4000');
+  console.log("Server is listening on port 4000");
 });
