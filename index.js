@@ -7,12 +7,11 @@ const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
-
 const io = socketIo(server, {
   cors: {
     origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type"],
     credentials: true,
     optionsSuccessStatus: 204,
   },
@@ -46,9 +45,8 @@ app.use(
   cors({
     origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type"],
     credentials: true,
-    optionsSuccessStatus: 204,
   })
 );
 
@@ -287,7 +285,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected", socket.id);
     const playerName = connectedPlayers[socket.id];
-    delete connectedPlayers[playerName];
+    delete connectedPlayers[socket.id];
     io.emit("playerList", Object.values(connectedPlayers));
   });
 });
@@ -298,7 +296,7 @@ app.get("/summary", (req, res) => {
   res.json(summary);
 });
 
-// Basic route for root path
+// เพิ่มเส้นทางพื้นฐานสำหรับ root path
 app.get("/", (req, res) => {
   res.send("Welcome to the Quiz Game Server!");
 });
