@@ -295,6 +295,10 @@ app.get("/summary", (req, res) => {
   res.json(summary);
 });
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the Quiz Game Server!");
+});
+
 server.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
