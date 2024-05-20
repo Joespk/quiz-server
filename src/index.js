@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
@@ -40,7 +40,7 @@ const bonusPoints = 50; // Updated to reflect only the bonus points
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
@@ -83,7 +83,6 @@ const readScoresFromFile = () => {
     ensureDataDirExists();
     console.log("Reading scores from file");
     const data = fs.readFileSync(scoreFilePath, "utf8");
-    console.log("Scores read from file:", data); // Log the data read from the file
     return JSON.parse(data);
   } catch (err) {
     console.error("Error reading score file:", err);
@@ -94,10 +93,9 @@ const readScoresFromFile = () => {
 const writeScoresToFile = (scores) => {
   try {
     ensureDataDirExists();
-    console.log("Writing scores to file");
+    console.log("Writing scores to file:", JSON.stringify(scores, null, 2)); // เพิ่มการ log ข้อมูลก่อนเขียนลงไฟล์
     fs.writeFileSync(scoreFilePath, JSON.stringify(scores, null, 2), "utf8");
     console.log("Scores successfully written to file");
-    console.log("Scores written to file:", JSON.stringify(scores, null, 2)); // Log the data written to the file
   } catch (err) {
     console.error("Error writing score file:", err);
   }
@@ -186,7 +184,6 @@ const checkIfQuizEnded = () => {
 
 // Load existing scores from file when server starts
 playerScores = readScoresFromFile();
-console.log("Initial player scores:", playerScores); // Log initial scores
 
 io.on("connection", (socket) => {
   console.log("New client connected", socket.id);
@@ -269,9 +266,15 @@ io.on("connection", (socket) => {
     playerScores[name] += score;
 
     // Write updated scores to file
-    console.log("Player scores before writing to file:", playerScores);
+    console.log(
+      "Player scores before writing to file:",
+      JSON.stringify(playerScores, null, 2)
+    );
     writeScoresToFile(playerScores);
-    console.log("Player scores after writing to file:", playerScores);
+    console.log(
+      "Player scores after writing to file:",
+      JSON.stringify(playerScores, null, 2)
+    );
 
     socket.emit("answerResult", { isCorrect, score });
   });
