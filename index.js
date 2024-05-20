@@ -13,6 +13,7 @@ const io = socketIo(server, {
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
+    optionsSuccessStatus: 204,
   },
 });
 
