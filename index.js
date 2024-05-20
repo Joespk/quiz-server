@@ -295,6 +295,7 @@ app.get("/summary", (req, res) => {
   res.json(summary);
 });
 
+// เพิ่มเส้นทางพื้นฐานสำหรับ root path
 app.get("/", (req, res) => {
   res.send("Welcome to the Quiz Game Server!");
 });
