@@ -16,6 +16,7 @@ const io = socketIo(server, {
     optionsSuccessStatus: 204,
   },
   allowEIO3: true,
+  transports: ["websocket", "polling"],
 });
 
 const port = process.env.PORT || 4000;
