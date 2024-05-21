@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://quiz-test-hosting.web.app/",
+    origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"], // เพิ่มส่วนนี้เข้าไป
     credentials: true,
@@ -43,7 +43,7 @@ const bonusPoints = 50; // Updated to reflect only the bonus points
 
 app.use(
   cors({
-    origin: "https://quiz-test-hosting.web.app/",
+    origin: "https://quiz-test-hosting.web.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
