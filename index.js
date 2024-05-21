@@ -15,6 +15,7 @@ const io = socketIo(server, {
     credentials: true,
     optionsSuccessStatus: 204,
   },
+  transports: ["websocket", "polling"],
 });
 
 const port = process.env.PORT || 4000;
@@ -48,6 +49,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     optionsSuccessStatus: 204,
+    transports: ["websocket", "polling"],
   })
 );
 
