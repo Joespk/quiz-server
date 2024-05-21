@@ -11,6 +11,7 @@ const io = socketIo(server, {
   cors: {
     origin: "https://quiz-test-hosting.web.app/",
     methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"], // เพิ่มส่วนนี้เข้าไป
     credentials: true,
     optionsSuccessStatus: 204,
   },
@@ -44,7 +45,9 @@ app.use(
   cors({
     origin: "https://quiz-test-hosting.web.app/",
     methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    optionsSuccessStatus: 204,
   })
 );
 
