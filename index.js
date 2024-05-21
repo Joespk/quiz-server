@@ -15,7 +15,7 @@ const io = socketIo(server, {
     credentials: true,
     optionsSuccessStatus: 204,
   },
-  transports: ["websocket", "polling"],
+  allowEIO3: true,
 });
 
 const port = process.env.PORT || 4000;
@@ -49,7 +49,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     optionsSuccessStatus: 204,
-    transports: ["websocket", "polling"],
   })
 );
 
@@ -302,6 +301,7 @@ app.get("/summary", (req, res) => {
 // เพิ่มเส้นทางพื้นฐานสำหรับ root path
 app.get("/", (req, res) => {
   res.send("Welcome to the Quiz Game Server!");
+  console.log(req);
 });
 
 server.listen(port, () => {
